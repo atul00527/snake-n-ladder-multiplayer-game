@@ -1,10 +1,27 @@
-const socket = io('ws://localhost:5000')
+const socket = io('ws://127.0.0.1:5000')
 
+const turnEle = document.getElementById("turn")
+turnEle.innerHTML = ' '
+const diceValueEle = document.getElementById("dice")
+diceValueEle.innerHTML = ''
+
+const userName = prompt("enter your name")
 socket.on('info', (msg) => {
   console.log(msg)
+  console.log(`Name: ${userName}, ID : ${socket.id}`)
+})
+socket.on('game', ({ diceValue, clients, turn }) => {
+  console.log(clients, turn, socket.id)
+  if (turn === socket.id) {
+    turnEle.innerHTML = 'Your Turn'
+  } else {
+    turnEle.innerHTML = ''
+  }
+  diceValueEle.innerHTML = diceValue ? diceValue : ''
+  draw(clients)
 })
 
-socket.emit('info', 'hello from client')
+socket.emit('info', userName)
 
 const path = {
   1: { x: 0, y: 9 },
@@ -143,7 +160,7 @@ const ladder = [
   { from: 88, to: 91 },
 ]
 
-const canvasSize = 600
+const canvasSize =400
 const blockSize = canvasSize / 10
 
 const webpImage = new Image();
@@ -158,16 +175,11 @@ webpImage.onload = () => {
 };
 
 const playBtnEle = document.getElementById("play")
-playBtnEle.style.backgroundColor = "#0a0a"
-playBtnEle.style.color = "#ffff"
-playBtnEle.addEventListener('click', ()=>{
+// playBtnEle.disabled = true
+playBtnEle.style.backgroundColor = "#fcc"
+playBtnEle.style.color = "#000"
+playBtnEle.addEventListener('click', () => {
   socket.emit("play", "")
-})
-
-socket.on('play', (msg) => {
-  // console.log(msg)
-  const diceValueEle = document.getElementById("dice")
-  diceValueEle.innerHTML = msg
 })
 
 const drawCircle = (x, y, r, fillColor) => {
@@ -200,9 +212,13 @@ for (let i = 1; i < 10; i++) {
   drawLine(0, blockSize * i, canvasSize, blockSize * i)
 }
 
-// drawPawn(1, 1, "green")
-// drawPawn(3, 0, "red")
+const draw = (clients) => {
 
-drawPawn(1, "green")
-
-// console.log(path)
+  // clear screen
+  ctx.clearRect(0, 0, canvasSize, canvasSize)
+  ctx.drawImage(webpImage, 0, 0, canvasSize, canvasSize); // Example with custom position and size
+  // draw pawn
+  clients.forEach((e) => {
+    drawPawn(e.position, "green")
+  })
+}
